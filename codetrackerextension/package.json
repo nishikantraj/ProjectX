@@ -9,7 +9,11 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:codingTimeTracker.inputSessionKey",
+    "onDidOpenTextDocument"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [

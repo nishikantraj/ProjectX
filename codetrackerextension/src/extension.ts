@@ -10,6 +10,28 @@ export function activate(context: vscode.ExtensionContext) {
     const apiClient = new ApiClient();
     const timeTracker = new TimeTracker(apiClient, outputChannel, HEARTBEAT_INTERVAL);
 
+    // Load existing session key or prompt user
+    const config = vscode.workspace.getConfiguration("codingTimeTracker");
+    const sessionKey = config.get<string>("sessionKey");
+
+    if (sessionKey) {
+        timeTracker.setSessionKey(sessionKey);
+        outputChannel.appendLine(`Session key loaded: ${sessionKey}`);
+    } else {
+        vscode.window.showInputBox({
+            prompt: 'Enter session key:',
+            placeHolder: 'Session key'
+        }).then(async (result) => {
+            if (result) {
+                await config.update("sessionKey", result, vscode.ConfigurationTarget.Global);
+                timeTracker.setSessionKey(result);
+                outputChannel.appendLine(`Session key set: ${result}`);
+            } else {
+                outputChannel.appendLine("No session key entered. Tracking will not start.");
+            }
+        });
+    }
+
     // Register session key input command
     const disposableCommand = vscode.commands.registerCommand('codingTimeTracker.inputSessionKey', async () => {
         const result = await vscode.window.showInputBox({
@@ -18,34 +40,26 @@ export function activate(context: vscode.ExtensionContext) {
         });
 
         if (result) {
-            await vscode.workspace.getConfiguration().update(
-                'codingTimeTracker.sessionKey', 
-                result, 
-                vscode.ConfigurationTarget.Global
-            );
+            await config.update("sessionKey", result, vscode.ConfigurationTarget.Global);
             timeTracker.setSessionKey(result);
             outputChannel.appendLine(`Session key updated: ${result}`);
         }
     });
 
-    // Register save handler
+    // Register save and change handlers
     const disposableSave = vscode.workspace.onDidSaveTextDocument((document) => {
         timeTracker.handleFileSave(document);
+    });
+
+    const disposableChange = vscode.workspace.onDidChangeTextDocument((e) => {
+        timeTracker.handleFileChange(e.document);
     });
 
     context.subscriptions.push(
         disposableCommand,
         disposableSave,
-        vscode.workspace.onDidChangeTextDocument((e) => {
-            timeTracker.handleFileChange(e.document);
-        })
+        disposableChange
     );
-
-    // Load existing session key
-    const sessionKey = vscode.workspace.getConfiguration("codingTimeTracker").get<string>("sessionKey");
-    if (sessionKey) {
-        timeTracker.setSessionKey(sessionKey);
-    }
 }
 
 export function deactivate() {
