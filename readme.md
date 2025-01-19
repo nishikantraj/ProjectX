@@ -35,7 +35,7 @@ npm run compile
 2. A new VS Code window (Extension Development Host) will open with the extension loaded.
 
 ### 5. Test the Extension
-1. Open the command palette (Ctrl+Shift+P) and run the command Code Tracker.
+1. Open the command palette (Ctrl+Shift+P) and run the command **Code Tracker**.
 2. Enter your session key when prompted.(For testing purpose put any dummy string. Ex: test12)
 3. Edit or save files in the editor to see activity being logged in the Output Channel(2nd left of Terminal) named CodeTrackerExtension.
 
