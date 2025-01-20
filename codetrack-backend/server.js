@@ -1,21 +1,12 @@
-const dotenv = require("dotenv")
-const express = require("express")
-const cors = require("cors")
+const http = require("http");
+const app = require("./app")
 const connectDB = require("./src/config/db")
-
-dotenv.config();
-const app = express()
-
-// MiddleWare
-app.use(express.json())
-app.use(cors())
+const PORT = process.env.PORT || 5001
 
 //Database Connection
 connectDB()
 
-app.use("/api/auth", require("./src/routes/authRoutes"));
-app.use("/api/leaderboard", require("./src/routes/leaderboardRoutes"))
-
 //Server listening
-const PORT = process.env.PORT || 5001
-app.listen(PORT, ()=>console.log(`Server running on port ${PORT}`))
+const router = http.createServer(app);
+
+router.listen(PORT, ()=>console.log(`Server running on port ${PORT}`))
