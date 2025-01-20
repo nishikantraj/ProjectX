@@ -2,6 +2,7 @@ const User = require("../models/User")
 const jwt = require("jsonwebtoken")
 const bcrypt = require("bcrypt");
 const hashPassword = require("../utils/hashPassword");
+const BlacklistTokenModel = require("../models/blacklistToken.model");
 
 const registerUser = async (req,res)=>{
     
@@ -27,7 +28,8 @@ const registerUser = async (req,res)=>{
         await user.save();
 
         const token = user.generateAuthToken();
-        res.status(201).json({message:"User registered successfully", user,token});
+        res.cookie("token", token)
+        res.status(201).json({message:"User registered successfully", user,token,sessionKey});
 
     } catch (error) {
         res.status(500).json({message:"Server error", error:error.message})        
@@ -38,7 +40,7 @@ const loginUser = async (req,res)=>{
     const {email, password}= req.body
 
     try {
-        const user = await User.findOne({email});
+        const user = await User.findOne({email}).select("+password");
         if(!user) return res.status(400).json({message:"User not found"})
         
         //Check password
@@ -49,14 +51,29 @@ const loginUser = async (req,res)=>{
         
         // Generate JWT
         const token = jwt.sign(
-            {id:user._id},
+            {_id:user._id},
             process.env.JWT_SECRET,
-            {expiresIn:"1d"}
+            {expiresIn:"24h"}
         )
-        res.status(200).json({message:"Login Successful", token, uniqueKey:user.uniqueKey})
+        res.cookie("token",token);
+        res.status(200).json({message:"Login Successful", token})
     } catch (error) {
         res.status(500).json({message:"Server error", error: error.message})   
     }
 };
 
-module.exports = {registerUser, loginUser}
+const profile = async(req,res)=>{
+    res.status(200).json(req.user);
+}
+const logoutUser = async(req,res)=>{
+    res.clearCookie("token");
+    const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
+
+    const blacklist = new BlacklistTokenModel({
+        token:token
+    });
+    blacklist.save();
+    res.status(200).json({message:"Logged out Successfully.",user:req.user})
+}
+
+module.exports = {registerUser, loginUser, logoutUser, profile}

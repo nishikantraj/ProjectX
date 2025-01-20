@@ -1,7 +1,8 @@
 const express = require("express");
-const {registerUser, loginUser} = require("../controllers/user.controller");
+const {registerUser, loginUser, logoutUser, profile} = require("../controllers/user.controller");
 const router = express.Router();
 const z = require("zod");
+const authUser = require("../middlewares/authMiddleware");
 
 const registerSchema = z.object({
     userName: z.string().min(2,"User Name lenght must be 2 character long."),
@@ -42,6 +43,8 @@ const loginValidation = (req,res,next)=>{
 }
 
 router.post("/register",registerValidation,registerUser);
-// router.post("/login",loginValidation,loginUser);
+router.post("/login",loginValidation,loginUser);
+router.get("/profile",authUser,profile);
+router.get("/logout",authUser, logoutUser)
 
 module.exports = router;
