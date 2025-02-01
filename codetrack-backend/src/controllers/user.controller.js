@@ -75,5 +75,4 @@ const logoutUser = async(req,res)=>{
     blacklist.save();
     res.status(200).json({message:"Logged out Successfully.",user:req.user})
 }
-
 module.exports = {registerUser, loginUser, logoutUser, profile}
