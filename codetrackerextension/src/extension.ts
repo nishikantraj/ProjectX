@@ -10,6 +10,8 @@ interface TimeEntryData {
     sessionKey: string;
     language: string;
     duration: number;
+    startTime: string;
+    endTime: string;
 }
 
 class ApiClient {
@@ -20,9 +22,11 @@ class ApiClient {
 
         // Log the entry that would be sent to the database
         console.log('=== New Time Entry ===');
-        console.log('Timestamp:', new Date().toISOString());
+        console.log('Timestamp (Logged at):', new Date().toISOString());
         console.log('Session Key:', data.sessionKey);
         console.log('Language:', data.language);
+        console.log('Start Time:', data.startTime);
+        console.log('End Time:', data.endTime);
         console.log('Duration (ms):', data.duration);
         console.log('Duration (min):', (data.duration / 60000).toFixed(2));
         console.log('==================\n');
@@ -163,6 +167,8 @@ class TimeTracker {
                 sessionKey: this.sessionKey,
                 language: entry.language,
                 duration: entry.endTime - entry.startTime,
+                startTime: new Date(entry.startTime).toISOString(),
+                endTime: new Date(entry.endTime).toISOString(), 
             });
             this.outputChannel.appendLine("Sync successful.");
         } catch (error) {
