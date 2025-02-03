@@ -11,6 +11,6 @@ app.use(cors())
 app.use(cookieParser())
 
 app.use("/api/user", require("./src/routes/user.routes"));
-// app.use("/api/leaderboard", require("./src/routes/leaderboardRoutes"))
+app.use("/api/leaderboard", require("./src/routes/leaderboard.routes"))
 
 module.exports = app;
