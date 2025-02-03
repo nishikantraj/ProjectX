@@ -14,29 +14,54 @@ interface TimeEntryData {
     endTime: string;
 }
 
+
+interface ApiErrorResponse {
+    message: string;
+    error?: string;
+}
 class ApiClient {
     private logEntries: TimeEntryData[] = [];
+    private readonly apiUrl = 'http://localhost:5001/api/leaderboard/activity';
 
     async sendTimeEntry(data: TimeEntryData): Promise<void> {
         this.logEntries.push(data);
+        
+        try {
+            const response = await fetch(this.apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    sessionKey: data.sessionKey,
+                    language: data.language,
+                    startTime: data.startTime,
+                    endTime: data.endTime,
+                    duration: data.duration
+                })
+            });
 
-        // Log the entry that would be sent to the database
-        console.log('=== New Time Entry ===');
-        console.log('Timestamp (Logged at):', new Date().toISOString());
-        console.log('Session Key:', data.sessionKey);
-        console.log('Language:', data.language);
-        console.log('Start Time:', data.startTime);
-        console.log('End Time:', data.endTime);
-        console.log('Duration (ms):', data.duration);
-        console.log('Duration (min):', (data.duration / 60000).toFixed(2));
-        console.log('==================\n');
+            if (!response.ok) {
+                const data = await response.json();
+                const errorData = data as ApiErrorResponse;
+                throw new Error(`API Error: ${errorData.message || response.statusText}`);
+            }
 
-        // Simulate random API failures for testing retry mechanism
-        if (Math.random() < 0.2) { // 20% chance of failure
-            throw new Error('Simulated API failure');
+            // logging for debugging purposes
+            outputChannel.appendLine('=== Time Entry Sent Successfully ===');
+            outputChannel.appendLine(`Timestamp: ${new Date().toISOString()}`);
+            outputChannel.appendLine(`Session Key: ${data.sessionKey}`);
+            outputChannel.appendLine(`Language: ${data.language}`);
+            outputChannel.appendLine(`Start Time: ${data.startTime}`);
+            outputChannel.appendLine(`End Time: ${data.endTime}`);
+            outputChannel.appendLine(`Duration (ms): ${data.duration}`);
+            outputChannel.appendLine(`Duration (min): ${(data.duration / 60000).toFixed(2)}`);
+            outputChannel.appendLine('===============================\n');
+
+        } catch (error:any) {
+            outputChannel.appendLine(`Failed to send time entry: ${error.message}`);
+            throw error; // Re-throw to trigger retry mechanism
         }
-
-        return Promise.resolve();
     }
 
     // Helper method to get all logged entries
