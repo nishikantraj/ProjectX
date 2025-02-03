@@ -1,3 +1,4 @@
+const cron = require("node-cron")
 const ActivityLog = require("../models/ActivityLog");
 const User = require("../models/User");
 
@@ -66,5 +67,26 @@ const getLeaderboard = async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+
+
+// Atuo cleanup logic
+const cleanUpOldEntries = async()=>{
+    const now = new Date();
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    
+    try {
+        const activityLogs = await ActivityLog.find({});
+        for(log of activityLogs){
+            //Filter out time entries older than 24-hr
+            log.timeEntries = log.timeEntries.filter(entry => new Date(entry.endTime) > twentyFourHoursAgo)
+            await log.save();
+        }
+        console.log("Old entries cleaned up successfully.");
+    } catch (error) {
+        console.error("Error during cleanup:", error);        
+    }
+}
+
+cron.schedule("* * * * *", cleanUpOldEntries);
 
 module.exports = {leaderboardCreate, getLeaderboard};
